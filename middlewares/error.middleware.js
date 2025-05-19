@@ -17,7 +17,7 @@ const errorMiddleware=(err, req, res, next)=>{
         }
 
         if(err.name=='ValidationError'){
-            const message = Object.values(err.error).map(val=>val.message);
+            const message = Object.values(err.error || {}).map(val=>val.message);
             error = new Error(message);
             error.statusCode=400;
         }
