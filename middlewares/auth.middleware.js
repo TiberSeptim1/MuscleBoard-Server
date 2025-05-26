@@ -1,27 +1,26 @@
-import jwt from 'jsonwebtoken'
-import { JWT_SECRET } from '../config/env.js';
-import User from "../models/user.model.js";
+import { createClient } from '@supabase/supabase-js'
+import {SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL} from '../config/env.js'
 
-const authorize = async (req,res,next)=>{
-    try {
-        const token = req.cookies.token;
 
-        if (!token){
-            return res.status(401).json({message:'Unauthorized access'});
-        }
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-        const decoded = jwt.verify(token, JWT_SECRET)
-        const user = await User.findById(decoded.userId);
-        if(!user){
-            return res.status(401).json({message:'Unauthorized'})
-        }
-        req.user = user;
-        next();
-        
-    } catch (error) {
-        res.status(401).json({message:'Unauthorized access',error: error.message});
+const authorize = async (req, res, next) => {
+  const authHeader = req.headers.authorization
 
-    }
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Missing or invalid token' })
+  }
+
+  const token = authHeader.split(' ')[1]
+
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+
+  if (error || !user) {
+    return res.status(401).json({ message: 'Unauthorized' })
+  }
+
+  req.user = user
+  next()
 }
 
-export default authorize;
+export default authorize

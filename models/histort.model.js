@@ -1,12 +1,15 @@
 import mongoose from "mongoose";
 
-const subscriptionSchema = new mongoose.Schema({
+const historySchema = new mongoose.Schema({
     name:{
         type: String,
         required: [true, 'Name is required'],
         trim: true,
-        minlength:2,
-        maxlength:255,
+        minLength:2,
+        maxLength:255,
+    },
+    subscriptionId:{
+         type: mongoose.Schema.Types.ObjectId, ref: 'Subscription', required: true 
     },
     price:{
         type: Number,
@@ -51,15 +54,11 @@ const subscriptionSchema = new mongoose.Schema({
         required: [true, 'Fees paid is required'],
         min:[0, 'must be greater than 0'],
     },
-    contact:{
-        type: String,
-        minlength:10,
-        maxlength:10
-    }
+    updatedAt: { type: Date, default: Date.now },
 
 },{timestamps:true});
 
-subscriptionSchema.pre('save', function(next){
+historySchema.pre('save', function(next){
     if (this.startDate && this.frequency){
         const endDate =new Date(this.startDate);
         endDate.setMonth(endDate.getMonth()+this.frequency);
@@ -72,13 +71,9 @@ subscriptionSchema.pre('save', function(next){
     if (this.feesPaid<this.price){
         this.status='pending'
     }
-    if(this.endDate< new Date() && this.feesPaid<this.price){
-        this.status='pending and expired'
-    }
-
     next();
 })
 
-const Subscription = mongoose.model('Subscription', subscriptionSchema)
+const History = mongoose.model('History', historySchema)
 
-export default Subscription;
+export default History;
