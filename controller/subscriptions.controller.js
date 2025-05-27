@@ -99,8 +99,10 @@ export const updateSubscription = async (req, res, next)=>{
         if (!subscription) return res.status(404).json({error: 'not found'});
         if(subscription.userId!==userId) return res.status(403).json({error:'Unauthorized'});
 
+        const startDateChanged = startDate && new Date(startDate).getTime() !== new Date(subscription.startDate).getTime();
+
         const shouldSaveHistory =
-        (startDate && startDate !== subscription.startDate) ||
+        startDateChanged ||
         (frequency && frequency !== subscription.frequency);
     
       if (shouldSaveHistory) {
