@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Subscription from "./subscription.model.js";
 
 const historySchema = new mongoose.Schema({
     name:{
@@ -9,7 +10,7 @@ const historySchema = new mongoose.Schema({
         maxLength:255,
     },
     subscriptionId:{
-         type: mongoose.Schema.Types.ObjectId, ref: 'Subscription', required: true 
+         type: mongoose.Schema.Types.ObjectId, ref: Subscription, required: true 
     },
     price:{
         type: Number,

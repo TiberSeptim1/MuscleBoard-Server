@@ -37,7 +37,7 @@ const subscriptionSchema = new mongoose.Schema({
         type:Date,
         validate:{
             validator:function (value){ 
-                return value> this.startDate},
+                return value>= this.startDate},
             message:'renewal date must be after start date'
         },
     },
@@ -53,8 +53,8 @@ const subscriptionSchema = new mongoose.Schema({
     },
     contact:{
         type: String,
-        minlength:10,
-        maxlength:10
+        required:false,
+        default:'No contact info'
     }
 
 },{timestamps:true});
