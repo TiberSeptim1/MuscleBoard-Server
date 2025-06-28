@@ -74,7 +74,7 @@ historySchema.pre('save', function(next){
     }
     next();
 })
-
+historySchema.index({ userId: 1, startDate: 1 });
 const History = mongoose.model('History', historySchema)
 
 export default History;

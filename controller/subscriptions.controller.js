@@ -2,6 +2,7 @@
 import Subscription from "../models/subscription.model.js";
 import History from "../models/histort.model.js";
 import { calculateStatus } from "../services/subscriptionService.js";
+import { getLast12Months } from "../services/helperFunction.js";
 
 export const createSubscription = async (req, res, next)=>{
     try {
@@ -136,4 +137,69 @@ export const updateSubscription = async (req, res, next)=>{
     } catch (error) {
         next(error)
     }
+}
+
+export const getAllStats = async (req, res, next)=>{
+    try{
+    const userId = req.user.id;
+    const now = new Date();
+    //overall
+    const overallSubIncome = await Subscription.aggregate([
+        {$match:{userId}},
+        {$group:{_id:null, total:{$sum: "$feesPaid"}}}
+    ])
+
+    const overallHistIncome = await History.aggregate([
+        {$match:{userId}},
+        {$group:{_id:null, total:{$sum: "$feesPaid"}}}
+    ])
+
+    const overallIncome = (overallSubIncome[0]?.total||0) + (overallHistIncome[0]?.total||0);  
+
+    //yearly
+    const thisYear = new Date(new Date().getFullYear(), 0, 1)
+
+    const yearlySubIncome = await Subscription.aggregate([
+        {$match:{userId, startDate: {$gte: thisYear, $lte: now}}},
+        {$group:{_id:null, total:{$sum:"$feesPaid"}}}
+    ])
+    const yearlyHistIncome = await History.aggregate([
+        {$match:{userId, startDate: {$gte: thisYear, $lte: now}}},
+        {$group:{_id:null, total:{$sum:"$feesPaid"}}}
+    ])
+
+    const yearlyIncome = (yearlySubIncome[0]?.total||0)+(yearlyHistIncome[0]?.total||0);
+
+//monthly data
+    const months = getLast12Months();
+
+    const monthlyData = await Promise.all(
+        months.map( async ({year, month, label})=>{
+            const start = new Date(year, month, 1);
+            const end = new Date(year, month+1, 1);
+
+            const [sub]=await Subscription.aggregate([
+                {$match:{userId, startDate:{$gte:start, $lte:end}}},
+                {$group:{_id:null, total:{$sum:"$feesPaid"}}}
+            ]);
+            const [hist]=await History.aggregate([
+                {$match:{userId, startDate:{$gte:start, $lte:end}}},
+                {$group:{_id:null, total:{$sum:"$feesPaid"}}}
+            ]);
+
+            return {
+                month: label,
+                income: (sub?.total||0)+(hist?.total||0)
+            };
+        })
+    )
+
+        const currentMonthIncome = monthlyData[11]?.income || 0;
+        const previousMonthIncome = monthlyData[10]?.income || 0;
+            res.status(200).json({success: true, overallIncome, yearlyIncome, monthlyData, currentMonthIncome, previousMonthIncome})
+}catch(error){
+        next(error);
+        console.error(error);
+        res.status(500).json({success:false, message:'error is in getStats controller'})
+    };
 }

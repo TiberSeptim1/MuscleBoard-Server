@@ -78,7 +78,7 @@ subscriptionSchema.pre('save', function(next){
 
     next();
 })
-
+subscriptionSchema.index({ userId: 1, startDate: 1 });
 const Subscription = mongoose.model('Subscription', subscriptionSchema)
 
 export default Subscription;
