@@ -12,7 +12,7 @@ import cors from 'cors'
 const app = express();
 
 const allowedOrigins = [
-    'https://muscle-board-client.vercel.app',
+    'https://muscleboard.vercel.app',
     'http://localhost:5173'               
   ];
   
